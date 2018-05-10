@@ -1,0 +1,17 @@
+{
+  	"manifest_version": 2,
+  	"name": "WP Post Finder",
+  	"version": "0.1",
+  	"description": "Runs a script that tracks which posts rise quickly to the top."
+  	"background": {
+  		"scripts": ["background.js"]
+	},
+  	"content_scripts": [
+    	{
+    	"matches": [
+        	"<all_urls>"
+      	],
+      	"js": ["jquery-3.3.1.min.js", "content.js"]
+    	}
+  	]
+}

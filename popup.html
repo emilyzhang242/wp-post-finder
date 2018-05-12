@@ -1,16 +1,19 @@
  <!DOCTYPE html>
   <html>
     <head>
-      <style>
-        button {
-          height: 30px;
-          width: 30px;
-          outline: none;
-        }
-      </style>
+      <link rel="stylesheet" type="text/css" href="style.css" />
+      <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" />
     </head>
     <body>
-      <button id="changeColor"></button>
+      <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+      <div class="container">
+        <div class='row'>
+          <button class="pull-right btn btn-default btn-sm">Refresh</button>
+          <button id="runScript" data-run="False" class='btn btn-success btn-sm'>Run Script</button>
+        </div>
+        <h3><span id="numGoodPosts">0</span> Potential Posts</h3>
+        <p id='message'></p>
+      </div>
       <script src="popup.js"></script>
     </body>
   </html>

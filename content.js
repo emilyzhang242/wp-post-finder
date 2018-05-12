@@ -106,7 +106,7 @@ function getNumComments(url) {
 }
 
 //getWPcode();
-var interval = setInterval(getWPcode, 100000);
+//var interval = setInterval(getWPcode, 100000);
 
 chrome.runtime.onMessage.addListener(
   function(request, sender, sendResponse) {

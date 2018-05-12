@@ -1,11 +1,22 @@
-let changeColor = document.getElementById('runScript');
+let runScript = document.getElementById('runScript');
+var message = document.querySelector('#message');
+let wpSite = "https://www.reddit.com/r/WritingPrompts/"
 
-chrome.storage.sync.get('color', function(data) {
-	changeColor.style.backgroundColor = data.color;
-	changeColor.setAttribute('value', data.color);
-});
+//want to run the script 
+runScript.onclick = function(element) {
+	// send message to run content
 
-changeColor.onclick = function(element) {
+	//update URL to main page in order to run script
+	chrome.tabs.getSelected(null, function (tab) {
+  		chrome.tabs.update(tab.id, {url: wpSite});
+  	});
+
+	//send message to run script
+	chrome.tabs.executeScript(null, {
+    	file: "content.js"
+  	}, function() {
+  		//
+  	});
     // let color = element.target.value;
     // chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
     //   chrome.tabs.executeScript(
@@ -13,20 +24,27 @@ changeColor.onclick = function(element) {
     //       {code: 'document.body.style.backgroundColor = "' + color + '";'});
     // });
 
-    try {
-        chrome.tabs.getSelected(null, function (tab) {
-            chrome.tabs.sendRequest(tab.id, {action: "getSource"}, function(source) {
-                alert(source);
-            });
-        });
-    }
-    catch (ex) {
-        alert(ex);
-    }
+    // try {
+    //     chrome.tabs.getSelected(null, function (tab) {
+    //         chrome.tabs.sendRequest(tab.id, {action: "getSource"}, function(source) {
+    //             alert(source);
+    //         });
+    //     });
+    // }
+    // catch (ex) {
+    //     alert(ex);
+    // }
 };
+/* LISTENERS */
 
 chrome.runtime.onMessage.addListener(function(request, sender) {
   if (request.action == "getSource") {
+    //message.innerText = request.source;
+  }
+});
+
+chrome.runtime.onMessage.addListener(function(request, sender) {
+  if (request.action == "getPrelimPossibilities") {
     message.innerText = request.source;
   }
 });
@@ -46,4 +64,4 @@ function onWindowLoad() {
 
 }
 
-window.onload = onWindowLoad;
+//window.onload = onWindowLoad;

@@ -6,12 +6,10 @@ var VOTE_CUTOFF = 500; // the cutoff after which posts shouldn't be looked at
 var postDic = {};
 var redditURL = "https://www.reddit.com";
 var username = "alannawu";
-var possiblePostURLs = {};
 
 function getWPcode() {
-	//refresh page
-	//location.reload();
 
+  var possiblePostURLs = {};
   var start = 0;
   var divPosts = $("html").find("#siteTable");
 
@@ -40,11 +38,7 @@ function getWPcode() {
     }
   }	
 
-  $.each(possiblePostURLs, function(key, value) {
-    var num = getNumComments(key);
-  });
-
-  console.log("HELPPPPPP");
+  return possiblePostURLs;
 }
 
 function getNumVotes(post) {
@@ -73,47 +67,9 @@ function getPostHTML(post) {
   return redditURL+url;
 }
 
-function getNumComments(url) {
-  window.location = url;
-  $(".sitetable").load(function() {
-    console.log(window.document);
-  });
+getWPcode();
 
-  //console.log(win.document);
-  //console.log($(win).html());
-
-  //window.location = url;
-
-  // console.log("here's where we belong");
-  // $(win).load(function() {
-  //    console.log($("html").html());
-  // });
-
-  // chrome.runtime.onMessage.addListener(
-  // function(request, sender, sendResponse) {
-  //   if( request.message === "clicked_browser_action" ) {
-  //     console.log("WE MADE IT");
-  //     var firstHref = $("html").find(".sitetable").find(".thing").find(".md").html();
-  //     console.log(firstHref);
-  //   }
-  // });
-  // $(window).load(function(){
-  //   var numComments = $("html").find(".sitetable > .thing").length;
-  //   console.log(numComments);
-  //   return numComments;
-  // });
-  
-}
-
-//getWPcode();
-//var interval = setInterval(getWPcode, 100000);
-
-chrome.runtime.onMessage.addListener(
-  function(request, sender, sendResponse) {
-    if( request.message === "clicked_browser_action" ) {
-      var firstHref = $("a[href^='http']").eq(0).attr("href");
-
-      console.log(firstHref);
-    }
-  }
-);
+chrome.runtime.sendMessage({
+    action: "getPrelimPossibilities",
+    source: getWPcode()
+});

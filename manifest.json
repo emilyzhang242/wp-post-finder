@@ -2,14 +2,20 @@
   	"manifest_version": 2,
   	"name": "WP Post Finder",
   	"version": "0.1",
-  	"description": "Runs a script that tracks which posts rise quickly to the top."
-  	"background": {
-  		"scripts": ["background.js"]
-	},
+  	"description": "Runs a script that tracks which posts rise quickly to the top.",
+    "background": {
+      "scripts": ["background.js"],
+      "persistent": false
+    },
+    "permissions": ["alarms", "activeTab", "declarativeContent", "storage"],
+    "page_action": {
+      "default_popup": "popup.html"
+    },
   	"content_scripts": [
     	{
     	"matches": [
-        	"<all_urls>"
+        	"https://www.reddit.com/r/WritingPrompts/",
+      		"https://www.reddit.com/r/WritingPrompts/rising/"
       	],
       	"js": ["jquery-3.3.1.min.js", "content.js"]
     	}

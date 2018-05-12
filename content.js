@@ -1,4 +1,4 @@
-var NUM_POSTS = 3;
+var NUM_POSTS = 15;
 var HOUR_CUTOFF = 12;
 var NUM_VOTES_PER_HOUR = 25;
 var COMMENT_CUTOFF = 3;
@@ -34,7 +34,9 @@ function getWPcode() {
     //if the conditions aren't met, then don't need to check comments
     if (ratio >= NUM_VOTES_PER_HOUR && numHours <= HOUR_CUTOFF) {
       var url = getPostHTML(post);
-      possiblePostURLs[url] = {"rank": i};
+      var timestamp = $(post).find(".entry").find(".live-timestamp").html();
+      var title = getTitle(post);
+      possiblePostURLs[url] = {"rank": i, "time": timestamp, "upvotes": numVotes, "title": title};
     }
   }	
 
@@ -51,12 +53,23 @@ function getNumVotes(post) {
   }
 }
 
+/* edge cases: could say 1 day ago or minutes ago. Must take that into account. */
 function getNumHours(post) {
   var timestamp = $(post).find(".entry").find(".live-timestamp").html();
-  var hours = timestamp.replace(/\D/g, '');
-  return parseInt(hours);
+  var number = timestamp.replace(/\D/g, '');
+
+  if (timestamp.includes("minute")) {
+    return parseInt(number/60);
+  } else if (timestamp.includes("day")) {
+    return 24;
+  } else {
+    return parseInt(number);
+  }
+
+  return parseInt(number);
 }
 
+/* FINISH THIS STUPID */
 function getVotesFromPage(post) {
   var url = $(post).data("url");
   console.log(url);
@@ -65,6 +78,11 @@ function getVotesFromPage(post) {
 function getPostHTML(post) {
   var url = $(post).data("url");
   return redditURL+url;
+}
+
+function getTitle(post) {
+  var title = $(post).find(".entry").find("a").html();
+  return title;
 }
 
 getWPcode();

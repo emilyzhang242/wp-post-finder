@@ -4,6 +4,8 @@ let numGoodPosts = document.querySelector('#numGoodPosts');
 let wpSite = "https://www.reddit.com/r/WritingPrompts/";
 let alarmName = "alarm";
 let REFRESH_TIME = 30;
+let myAudio = new Audio();        // create the audio object
+myAudio.src = "light.mp3";
 
 
 //want to run the script 
@@ -102,17 +104,20 @@ chrome.runtime.onMessage.addListener(function(request, sender) {
     buildContent(request.source);
     chrome.storage.sync.set({"info": request.source}, function() {
     });
-    //update badges 
+    //update badges + audio
     chrome.browserAction.setBadgeBackgroundColor({ color: [255, 0, 0, 255] });
-    chrome.browserAction.setBadgeText({text: Object.keys(request.source).length.toString()});
-
+    var numOfPosts = Object.keys(request.source).length.toString();
+    chrome.browserAction.setBadgeText({text: numOfPosts});
+    if (numOfPosts > 0) {
+      myAudio.play();  
+    }
     //update all the comments
     $.each(request.source, function(key, value) {
       chrome.tabs.getSelected(null, function (tab) {
         chrome.tabs.update(tab.id, {url: key});
         chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
           if (changeInfo == "complete") {
-            
+            // ADD IN FUNCTIONALITY HERE FOR LOOKING AT NUMBER OF COMMENTS!!!
           }
           var num = onWindowLoad();
         });

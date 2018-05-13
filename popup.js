@@ -7,7 +7,6 @@ let REFRESH_TIME = 30;
 let myAudio = new Audio();        // create the audio object
 myAudio.src = "light.mp3";
 
-
 //want to run the script 
 runScriptButton.onclick = function(element) {
 	// if is running is true, and we press the button, we want it to stop running, while replacing with a run button
@@ -37,7 +36,9 @@ function runScript() {
     chrome.tabs.executeScript(null, {
         file: "content.js"
     }, function() {
-
+      if (chrome.runtime.lastError) {
+        console.log('There was an error getting the content.js : \n' + chrome.runtime.lastError.message);
+      }
     });
   });
   //clear all alarms before creating a new one
@@ -91,19 +92,14 @@ function stopScript() {
 
 /* LISTENERS */
 
-//
-chrome.runtime.onMessage.addListener(function(request, sender) {
-  if (request.action == "getSource") {
-    //message.innerText = request.source;
-  }
-});
-
 // receives messages from content.js
 chrome.runtime.onMessage.addListener(function(request, sender) {
+
+  //key = tab id, value = url
+  var tabs = {};
+  var newInfo = request.source;
+
   if (request.action == "getPrelimPossibilities") {
-    buildContent(request.source);
-    chrome.storage.sync.set({"info": request.source}, function() {
-    });
     //update badges + audio
     chrome.browserAction.setBadgeBackgroundColor({ color: [255, 0, 0, 255] });
     var numOfPosts = Object.keys(request.source).length.toString();
@@ -111,34 +107,40 @@ chrome.runtime.onMessage.addListener(function(request, sender) {
     if (numOfPosts > 0) {
       myAudio.play();  
     }
-    //update all the comments
+
     $.each(request.source, function(key, value) {
-      chrome.tabs.getSelected(null, function (tab) {
-        chrome.tabs.update(tab.id, {url: key});
-        chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
-          if (changeInfo == "complete") {
-            // ADD IN FUNCTIONALITY HERE FOR LOOKING AT NUMBER OF COMMENTS!!!
-          }
-          var num = onWindowLoad();
-        });
+      $.ajax({
+        url: key,
+        type: "GET",
+        success: function(response) {
+          console.log(key);
+          var numComments = getNumComments(response);
+          newInfo[key].comments = numComments;
+        },
+        error: function(response) {
+        }
       });
     });
+    console.log(newInfo);
+    chrome.storage.sync.set({"info": newInfo}, function() {});
   }
 });
 
-/* END OF LISTENERS */
+/* returns the number of comments on the individual page */
+function getNumComments(html_string) {
+    var htmlObject = document.createElement('div');
+    $(htmlObject).attr("id", "dominfo")
+    $(htmlObject).html(html_string);
 
-function onWindowLoad() {
+    var parser = new DOMParser();
+    var doc = parser.parseFromString(html_string, "text/html");
+    var children = $(doc).find(".commentarea").find(".nestedlisting").children(".thing");
 
-  chrome.tabs.executeScript(null, {
-    file: "getPageSource.js"
-  }, function() {
-    // If you try and inject into an extensions page or the webstore/NTP you'll get an error
-    if (chrome.runtime.lastError) {
-      message.innerText = 'There was an error getting the HTML : \n' + chrome.runtime.lastError.message;
-    }
-  });
+    return children.length-1;
+
 }
+
+/* END OF LISTENERS */
 
 function buildContent(source) {
 	let html = "No Posts Match";

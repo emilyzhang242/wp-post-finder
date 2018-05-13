@@ -1,44 +1,55 @@
-let runScript = document.getElementById('runScript');
+let runScriptButton = document.getElementById('runScript');
 let posts = document.querySelector('#posts');
 let numGoodPosts = document.querySelector('#numGoodPosts');
-let wpSite = "https://www.reddit.com/r/WritingPrompts/"
+let wpSite = "https://www.reddit.com/r/WritingPrompts/";
+let info;
+
+
 
 //want to run the script 
-runScript.onclick = function(element) {
-	// send message to run content
+runScriptButton.onclick = function(element) {
+	// if is running is true, and we press the button, we want it to stop running, while replacing with a run button
+  if ($(this).data("run") == "true") {
+    $(this).html("Run Script");
+    $(this).removeClass("btn-danger");
+    $(this).addClass("btn-success");
+    $(this).data("run", "true");
+    stopScript();
+    // start the script, but replace it with a stop running button
+  } else {
+    $(this).html("Stop Script");
+    $(this).removeClass("btn-success");
+    $(this).addClass("btn-danger");
+    $(this).data("run", "false");
+    runScript();
+  }
+}
 
-	//update URL to main page in order to run script
-	chrome.tabs.getSelected(null, function (tab) {
-  		chrome.tabs.update(tab.id, {url: wpSite});
+function runScript() {
+  //update URL to main page in order to run script
+  chrome.tabs.getSelected(null, function (tab) {
+    chrome.tabs.update(tab.id, {url: wpSite});
 
-  		//send message to run script
-		chrome.tabs.executeScript(null, {
-    		file: "content.js"
-  		}, function() {
-  			//
-  		});
-  	});
+      //send message to run script
+    chrome.tabs.executeScript(null, {
+        file: "content.js"
+    }, function() {
 
-    // let color = element.target.value;
-    // chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
-    //   chrome.tabs.executeScript(
-    //       tabs[0].id,
-    //       {code: 'document.body.style.backgroundColor = "' + color + '";'});
-    // });
+    });
+  });
+  //clear all alarms before creating a new one
+  chrome.alarms.clearAll(function() {
+    createAlarm();
+  })
+}
 
-    // try {
-    //     chrome.tabs.getSelected(null, function (tab) {
-    //         chrome.tabs.sendRequest(tab.id, {action: "getSource"}, function(source) {
-    //             alert(source);
-    //         });
-    //     });
-    // }
-    // catch (ex) {
-    //     alert(ex);
-    // }
-};
+function stopScript() {
+  clearAlarm();
+}
+
 /* LISTENERS */
 
+//
 chrome.runtime.onMessage.addListener(function(request, sender) {
   if (request.action == "getSource") {
     //message.innerText = request.source;
@@ -49,14 +60,24 @@ chrome.runtime.onMessage.addListener(function(request, sender) {
   if (request.action == "getPrelimPossibilities") {
     let html = buildContent(request.source);
     posts.innerHTML = html;
-    //update number too
-    numGoodPosts.innerHTML = Object.keys(request.source).length;
+    info = request.source;
+    //update all the comments
+    $.each(request.source, function(key, value) {
+      chrome.tabs.getSelected(null, function (tab) {
+        chrome.tabs.update(tab.id, {url: key}, function() {
+          chrome.tabs.onUpdated.addListener(function() {
+            var num = onWindowLoad();
+            console.log(num);
+          });
+        });
+      });
+    });
   }
 });
 
-function onWindowLoad() {
+/* END OF LISTENERS */
 
-  var message = document.querySelector('#message');
+function onWindowLoad() {
 
   chrome.tabs.executeScript(null, {
     file: "getPageSource.js"
@@ -87,18 +108,22 @@ function buildContent(source) {
 	return html;
 }
 
-window.onload = chrome.tabs.executeScript(null, {
-                  file: "content.js"
-                }, function() {
-                  //
-                });
+/* ON LOAD */
+window.onload = runScript;
+let alarmName = "alarm";
+createAlarm();
 
-/* bootstrap toggle code */
-$("#hotLabel").on("click", function() {
-  $("#risingPosts").prop("checked", true);
-});
+/* alarm functionality */
+function createAlarm() {
+  chrome.alarms.create(alarmName, {periodInMinutes: 1});
+}
 
-$("#risingLabel").on("click", function() {
-  console.log('UM');
-  $("#hotPosts").prop("checked", true);
+function clearAlarm() {
+  chrome.alarms.clear(alarmName, function() {
+    //
+  });
+}
+
+chrome.alarms.onAlarm.addListener(function() {
+  runScript();
 });

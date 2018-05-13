@@ -25,7 +25,13 @@ function DOMtoString(document_root) {
     return html;
 }
 
+function getNumComments() {
+    var string = DOMtoString(document);
+    return string;
+
+}
+
 chrome.runtime.sendMessage({
     action: "getSource",
-    source: DOMtoString(document)
+    source: getNumComments()
 });

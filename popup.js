@@ -108,41 +108,14 @@ chrome.runtime.onMessage.addListener(function(request, sender) {
       myAudio.play();  
     }
 
-    $.each(request.source, function(key, value) {
-      $.ajax({
-        url: key,
-        type: "GET",
-        success: function(response) {
-          console.log(key);
-          var numComments = getNumComments(response);
-          newInfo[key].comments = numComments;
-        },
-        error: function(response) {
-        }
-      });
-    });
-    console.log(newInfo);
     chrome.storage.sync.set({"info": newInfo}, function() {});
   }
 });
 
-/* returns the number of comments on the individual page */
-function getNumComments(html_string) {
-    var htmlObject = document.createElement('div');
-    $(htmlObject).attr("id", "dominfo")
-    $(htmlObject).html(html_string);
-
-    var parser = new DOMParser();
-    var doc = parser.parseFromString(html_string, "text/html");
-    var children = $(doc).find(".commentarea").find(".nestedlisting").children(".thing");
-
-    return children.length-1;
-
-}
-
 /* END OF LISTENERS */
 
 function buildContent(source) {
+  console.log("build happening now");
 	let html = "No Posts Match";
 
   if (Object.keys(source).length != 0) {
@@ -156,12 +129,15 @@ function buildContent(source) {
     html+= value.upvotes;
     html+= " Upvotes</p><p class='prompt-hours'>";
     html+= value.time;
-    html+= "</p></div></div></div>";
-
+    html+= "</p><p class='prompt-comments'>";
+    html+= value.comments;
+    html+= " Comments</p></div></div></div>";
     });
   }
 
 	posts.innerHTML = html;
+
+  return html;
 }
 
 // when the popup loads, we want to update it with the storage information
@@ -178,6 +154,7 @@ chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
 
 function updatePopup() {
   chrome.storage.sync.get(['time'], function(result) {
+    console.log(timeDiff(grabTime(false)[0], result.time));
       if(timeDiff(grabTime(false)[0], result.time) > REFRESH_TIME) {
         runScript();
       } else {

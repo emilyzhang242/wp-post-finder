@@ -36,10 +36,46 @@ function getWPcode() {
       var url = getPostHTML(post);
       var timestamp = $(post).find(".entry").find(".live-timestamp").html();
       var title = getTitle(post);
-      possiblePostURLs[url] = {"rank": i-1, "time": timestamp, "upvotes": numVotes, "title": title};
+      var comments = getComments(url);
+
+      if (comments <= COMMENT_CUTOFF) {
+        possiblePostURLs[url] = {"rank": i-1, "time": timestamp, "upvotes": numVotes, "title": title, "comments": comments};
+      }
     }
   }	
   return possiblePostURLs;
+}
+
+function getComments(url) {
+
+  var num = -1;
+
+  $.ajax({
+    url: url,
+    type: "GET",
+    async: false,
+    success: function(response) {
+      num = getNumComments(response);
+    },
+    error: function(response) {
+          console.log("error: "+response);
+    }
+  });
+
+  return num;
+}
+
+/* returns the number of comments on the individual page, -1 is for the bot comment */
+function getNumComments(html_string) {
+    var htmlObject = document.createElement('div');
+    $(htmlObject).attr("id", "dominfo")
+    $(htmlObject).html(html_string);
+
+    var parser = new DOMParser();
+    var doc = parser.parseFromString(html_string, "text/html");
+    var children = $(doc).find(".commentarea").find(".nestedlisting").children(".thing");
+    return children.length-1;
+
 }
 
 function getNumVotes(post) {
@@ -83,8 +119,6 @@ function getTitle(post) {
   var title = $(post).find(".entry").find("a").html();
   return title;
 }
-
-getWPcode();
 
 chrome.runtime.sendMessage({
     action: "getPrelimPossibilities",

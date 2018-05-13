@@ -1,5 +1,5 @@
 var NUM_POSTS = 15;
-var HOUR_CUTOFF = 12;
+var HOUR_CUTOFF = 6;
 var NUM_VOTES_PER_HOUR = 25;
 var COMMENT_CUTOFF = 3;
 var VOTE_CUTOFF = 500; // the cutoff after which posts shouldn't be looked at 
@@ -59,7 +59,7 @@ function getNumHours(post) {
   var number = timestamp.replace(/\D/g, '');
 
   if (timestamp.includes("minute")) {
-    return parseInt(number/60);
+    return parseInt(number/60.0);
   } else if (timestamp.includes("day")) {
     return 24;
   } else {

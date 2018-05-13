@@ -3,7 +3,7 @@
   	"name": "WP Post Finder",
   	"version": "0.1",
   	"description": "Runs a script that tracks which posts rise quickly to the top.",
-    "content_security_policy": "script-src 'self' https://ajax.googleapis.com; object-src 'self'",
+    "content_security_policy": "script-src 'self' https://ajax.googleapis.com https://cdnjs.cloudflare.com https://maxcdn.bootstrapcdn.com; object-src 'self'",
     "background": {
       "scripts": ["jquery-3.3.1.min.js", "background.js"],
       "persistent": false

@@ -2,16 +2,26 @@
   <html>
     <head>
       <link rel="stylesheet" type="text/css" href="style.css" />
-      <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" />
+      <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.1.0/css/bootstrap.min.css">
+      <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"></script>
+      <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
     </head>
     <body>
-      <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
       <div class="container">
-        <div class='row'>
-          <button class="pull-right btn btn-default btn-sm">Refresh</button>
-          <button id="runScript" data-run="False" class='btn btn-success btn-sm'>Run Script</button>
+        <div class='row justify-content-between'>
+          <button id="runScript" class='btn btn-success btn-sm'>Run Script</button>
+          <h3 style='margin-top: 5px'>WP Post Finder</h3>
+          <button class="btn btn-outline-secondary btn-sm" disabled>Refresh</button>
         </div>
-        <h3><span id="numGoodPosts">0</span> Potential Posts</h3>
+        <div class="btn-group btn-group-toggle w-100" data-toggle="buttons" id='typeOfPost'>
+          <label class="btn btn-outline-info active w-50" id='hotLabel'>
+            <input type="radio" name="post" id="hotPosts" value="hot" checked> Hot Posts
+          </label>
+           <label class="btn btn-outline-info w-50" id='risingLabel'>
+            <input type="radio" name="post" id="risingPosts" value="rising"> Rising Posts
+          </label>
+        </div>
       </div>
       <div id='posts' class='container'>
       </div>

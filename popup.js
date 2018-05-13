@@ -1,5 +1,6 @@
 let runScript = document.getElementById('runScript');
-var posts = document.querySelector('#posts');
+let posts = document.querySelector('#posts');
+let numGoodPosts = document.querySelector('#numGoodPosts');
 let wpSite = "https://www.reddit.com/r/WritingPrompts/"
 
 //want to run the script 
@@ -48,6 +49,8 @@ chrome.runtime.onMessage.addListener(function(request, sender) {
   if (request.action == "getPrelimPossibilities") {
     let html = buildContent(request.source);
     posts.innerHTML = html;
+    //update number too
+    numGoodPosts.innerHTML = Object.keys(request.source).length;
   }
 });
 
@@ -69,13 +72,13 @@ function buildContent(source) {
 	let html = "";
 
 	$.each(source, function(key, value) {
-		html+= "<div class='row post'><div class='col-sm-1 col-md-1 col-xs-1'><button class='btn btn-outline-primary prompt-rank'>";
+		html+= "<div class='row post'><div class='col-1'><h3 class='prompt-rank'>";
 		html+= value.rank;
-		html+= "</button></div><div class='col-sm-11 col-md-11 col-xs-11'><p class='prompt-title'>";
+		html+= "</h3></div><div class='col-11'><p class='prompt-title'>";
 		html+= value.title;
 		html+= "</p><div class='stats'><p class='prompt-upvotes'>";
 		html+= value.upvotes;
-		html+= "</p><p class='prompt-hours'>";
+		html+= " Upvotes</p><p class='prompt-hours'>";
 		html+= value.time;
 		html+= "</p></div></div></div>";
 
@@ -84,4 +87,18 @@ function buildContent(source) {
 	return html;
 }
 
-//window.onload = onWindowLoad;
+window.onload = chrome.tabs.executeScript(null, {
+                  file: "content.js"
+                }, function() {
+                  //
+                });
+
+/* bootstrap toggle code */
+$("#hotLabel").on("click", function() {
+  $("#risingPosts").prop("checked", true);
+});
+
+$("#risingLabel").on("click", function() {
+  console.log('UM');
+  $("#hotPosts").prop("checked", true);
+});

@@ -8,8 +8,8 @@
       "scripts": ["jquery-3.3.1.min.js", "background.js"],
       "persistent": false
     },
-    "permissions": ["alarms", "activeTab", "declarativeContent", "storage", "<all_urls>", "tabs"],
-    "page_action": {
+    "permissions": ["alarms", "activeTab", "declarativeContent", "storage", "<all_urls>", "tabs", "storage"],
+    "browser_action": {
       "default_popup": "popup.html"
     },
   	"content_scripts": [

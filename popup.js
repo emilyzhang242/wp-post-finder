@@ -59,6 +59,10 @@ function runScript() {
   //clear all alarms before creating a new one
   chrome.alarms.clearAll(function() {
     createAlarm();
+    //button 
+    $("#lastRefresh").addClass("btn-outline-success");
+    $("#lastRefresh").removeClass("btn-outline-danger");
+
     var time = grabTime(true);
     //set new storage time
     chrome.storage.local.set({"time": time[0]}, function() {
@@ -104,7 +108,7 @@ function grabTime(refresh) {
 function stopScript() {
   clearAlarm();
   $("#lastRefresh").removeClass("btn-outline-success");
-  $("#lastRefresh").addClass("btn-outline")
+  $("#lastRefresh").addClass("btn-outline-danger");
 }
 
 /* LISTENERS */

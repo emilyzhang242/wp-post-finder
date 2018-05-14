@@ -15,10 +15,9 @@
   	"content_scripts": [
     	{
     	"matches": [
-        	"https://www.reddit.com/r/WritingPrompts/",
-      		"https://www.reddit.com/r/WritingPrompts/rising/"
+        	"https://www.reddit.com/r/WritingPrompts/"
       	],
-      	"js": ["jquery-3.3.1.min.js", "content.js"]
+      	"js": ["jquery-3.3.1.min.js"]
     	}
   	]
 }

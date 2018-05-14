@@ -3,8 +3,7 @@ let posts = document.querySelector('#posts');
 let numGoodPosts = document.querySelector('#numGoodPosts');
 let wpSite = "https://www.reddit.com/r/WritingPrompts/";
 let alarmName = "alarm";
-let REFRESH_TIME = 20;
-let POPUP_TIME = 5;
+let REFRESH_TIME = 30;
 let myAudio = new Audio();        // create the audio object
 myAudio.src = "light.mp3";
 
@@ -23,6 +22,18 @@ runScriptButton.onclick = function(element) {
     runScript();
   }
 }
+
+$("input[name=post]").on("change", function() {
+  //hide the correct one 
+  var type = $("input[name=post]:checked").val();
+  if (type == "hot") {
+    $(".rising").hide();
+    $(".hot").show();
+  } else {
+    $(".hot").hide();
+    $(".rising").show();
+  }
+});
 
 // script is now running
 function runButton() {
@@ -131,7 +142,7 @@ chrome.runtime.onMessage.addListener(function(request, sender) {
     if (numOfPosts > 0) {
       myAudio.play();  
     }
-
+    console.log(newInfo);
     chrome.storage.local.set({"info": newInfo}, function() {
       updatePopup(newInfo);
     });
@@ -141,36 +152,66 @@ chrome.runtime.onMessage.addListener(function(request, sender) {
 /* END OF LISTENERS */
 
 function buildContent(source) {
+
+  var sorted_array = sortDictionary(source);
+
 	let html = "<h3 class='text-center mt-3'>No Posts</h3>";
 
   if (Object.keys(source).length != 0) {
-    html = "";
-    $.each(source, function(key, value) {
+    htmlhot = "";
+    htmlrising = "";
+    $.each(sorted_array, function(key, value) {
     if (value.ratio > GOOD_RATIO_CUTOFF) {
-      html+= "<div class='row post post-special'><div class='col-1'><h3 class='prompt-rank'>";
+      window["html"+value.type]+= "<div class='row post post-special "+value.type+"'><div class='col-1'><h3 class='prompt-rank'>";
     } else {
-      html+= "<div class='row post'><div class='col-1'><h3 class='prompt-rank'>";
+      window["html"+value.type]+= "<div class='row post "+value.type+"'><div class='col-1'><h3 class='prompt-rank'>";
     }
-    html+= value.rank;
-    html+= "</h3></div><div class='col-11'><p class='prompt-title'>";
-    html+= value.title;
-    html+= "</p><div class='stats'><p class='prompt-upvotes'>";
-    html+= value.upvotes;
-    html+= " Upvotes</p><p class='prompt-hours'>";
-    html+= value.time;
+    window["html"+value.type]+= value.rank;
+    window["html"+value.type]+= "</h3></div><div class='col-11'><p class='prompt-title'>";
+    window["html"+value.type]+= value.title;
+    window["html"+value.type]+= "</p><div class='stats'><p class='prompt-upvotes'>";
+    window["html"+value.type]+= value.upvotes;
+    window["html"+value.type]+= " Upvotes</p><p class='prompt-hours'>";
+    window["html"+value.type]+= value.time;
     if (value.comments <= GOOD_COMMENT_CUTOFF) {
-      html+= "</p><p class='prompt-comments' style='color: red'>";
+      window["html"+value.type]+= "</p><p class='prompt-comments' style='color: red'>";
     } else {
-      html+= "</p><p class='prompt-comments'>";
+      window["html"+value.type]+= "</p><p class='prompt-comments'>";
     }
-    html+= value.comments;
-    html+= " Comments</p></div></div></div>";
+    window["html"+value.type]+= value.comments;
+    window["html"+value.type]+= " Comments</p></div></div></div>";
     });
+
+    html = htmlhot + htmlrising;
   }
 
 	posts.innerHTML = html;
 
+  //hide the correct one 
+  var type = $("input[name=post]:checked").val();
+  if (type == "hot") {
+    $(".rising").hide();
+  } else {
+    $(".hot").hide();
+  }
+
   return html;
+}
+
+function sortDictionary(dic) {
+  console.log("sorting dictionary");
+  console.log(dic);
+  var array = [];
+
+  $.each(dic, function(key, value) {
+    array.push(value);
+  });
+  console.log(array);
+  array.sort(function(a,b) {
+    return a.rank - b.rank;
+  });
+
+  return array;
 }
 
 // when the popup loads, we want to update it with the storage information
@@ -185,7 +226,7 @@ window.onload = function() {
 function updatePopup(info) {
   console.log("updating popup");
   chrome.storage.local.get(['time'], function(result) {
-      if(timeDiff(grabTime(false)[0], result.time) > POPUP_TIME) {
+      if(timeDiff(grabTime(false)[0], result.time) > REFRESH_TIME) {
         console.log("1st");
         runScript();
       } else {

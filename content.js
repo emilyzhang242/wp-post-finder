@@ -1,33 +1,61 @@
-var NUM_POSTS = 15;
+var NUM_POSTS = 10;
 var HOUR_CUTOFF = 12;
-var NUM_VOTES_PER_HOUR = 15;
+var NUM_VOTES_PER_HOUR = 20;
 var NUM_VOTES_PER_RISING = 10;
 var COMMENT_CUTOFF = 3;
 var postDic = {};
 var redditURL = "https://www.reddit.com";
 var username = "alannawu";
 
-function getWPcode() {
+function createWPDictionary() {
+  var hotDict = getWPcode($("html").find("#siteTable"), "hot");
+  var risingDict = {};
+  $.ajax({
+    url: "https://www.reddit.com/r/WritingPrompts/rising/",
+    type: "GET",
+    async: false,
+    success: function(response) {
+      var parser = new DOMParser();
+      var doc = parser.parseFromString(response, "text/html");
+      risingDict = getWPcode($(doc).find("#siteTable"), "rising");
+    },
+    error: function(response) {
+          console.log("error: "+response);
+    }
+  });
+  $.extend(hotDict, risingDict);
+  console.log(JSON.stringify(hotDict));
+  return hotDict;
 
-  console.log("get WP code");
+}
+
+function getWPcode(divPosts, type) {
 
   var possiblePostURLs = {};
   var start = 0;
-  var divPosts = $("html").find("#siteTable");
 
   var startPost = divPosts.find(".thing").get(0);
   var startRank = $(startPost).find(".rank");
 
   // there might be pinned posts at top. Ignore those.
-  for (var x=0; x < 2; x++) {
-    startPost = divPosts.find(".thing").get(x);
-    startRank = $(startPost).find(".rank");
-    if (startRank.html() != "1") {
-      start += 1;
+  if (type == "hot") {
+    for (var x=0; x < 2; x++) {
+      startPost = divPosts.find(".thing").get(x);
+      startRank = $(startPost).find(".rank");
+      if (startRank.html() != "1") {
+        start += 1;
+      }
     }
   }
 
-  for (var i=start; i < (NUM_POSTS+start); i++) {
+  var numPosts = NUM_POSTS+start;
+  var divLength = divPosts.children(".thing").length;
+  if (divLength < numPosts) {
+    numPosts = divLength;
+  }
+
+  // code for hot posts 
+  for (var i=start; i < numPosts; i++) {
     var post = divPosts.find(".thing").get(i-1);
     var url = getPostHTML(post);
     var numVotes = getNumVotes(post, url);
@@ -41,8 +69,9 @@ function getWPcode() {
       var comments = getComments(url);
 
       if (comments <= COMMENT_CUTOFF) {
-        possiblePostURLs[url] = {"rank": i-2, "time": timestamp, "upvotes": numVotes, 
-                                  "title": title, "comments": comments, "ratio": ratio};
+        possiblePostURLs[url] = {"rank": i-start, "time": timestamp, "upvotes": numVotes, 
+                                  "title": title, "comments": comments, "ratio": ratio, "type": type,
+                                  "url": url};
       }
     }
   }	
@@ -96,10 +125,7 @@ function getNumHours(post) {
     return parseInt(number/60.0);
   } else if (timestamp.includes("day")) {
     return 24;
-  } else {
-    return parseInt(number);
   }
-
   return parseInt(number);
 }
 
@@ -141,5 +167,5 @@ function getTitle(post) {
 
 chrome.runtime.sendMessage({
     action: "callContent",
-    source: getWPcode()
+    source: createWPDictionary()
 });

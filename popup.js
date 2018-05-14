@@ -4,23 +4,23 @@ let numGoodPosts = document.querySelector('#numGoodPosts');
 let wpSite = "https://www.reddit.com/r/WritingPrompts/";
 let alarmName = "alarm";
 let REFRESH_TIME = 20;
+let POPUP_TIME = 5;
 let myAudio = new Audio();        // create the audio object
 myAudio.src = "light.mp3";
+
+let GOOD_COMMENT_CUTOFF = 1; 
+let GOOD_RATIO_CUTOFF = 40;
 
 //want to run the script 
 runScriptButton.onclick = function(element) {
 	// if is running is true, and we press the button, we want it to stop running, while replacing with a run button
   if ($(this).data("run") == "true") {
-    console.log("stop running");
     stopRunButton();
     stopScript();
-    chrome.storage.local.set({"running": "false"}, function() {});
     // start the script, but replace it with a stop running button
   } else {
-    console.log("start running");
     runButton();
     runScript();
-    chrome.storage.local.set({"running": "true"}, function() {});
   }
 }
 
@@ -82,8 +82,10 @@ function grabTime(refresh) {
     var period = " ";
 
     var hours = newDate.getHours();
-    if (hours>12) {
-      hours-=12; 
+    if (hours>=12) {
+      if (hours != 12) {
+        hours-=12; 
+      }
       period += "pm";  
     } else {
       if (hours == 0) {hours = 12; }
@@ -115,7 +117,7 @@ function stopScript() {
 
 // receives messages from content.js
 chrome.runtime.onMessage.addListener(function(request, sender) {
-
+  console.log("received message");
   //key = tab id, value = url
   var tabs = {};
   var newInfo = request.source;
@@ -144,7 +146,11 @@ function buildContent(source) {
   if (Object.keys(source).length != 0) {
     html = "";
     $.each(source, function(key, value) {
-    html+= "<div class='row post'><div class='col-1'><h3 class='prompt-rank'>";
+    if (value.ratio > GOOD_RATIO_CUTOFF) {
+      html+= "<div class='row post post-special'><div class='col-1'><h3 class='prompt-rank'>";
+    } else {
+      html+= "<div class='row post'><div class='col-1'><h3 class='prompt-rank'>";
+    }
     html+= value.rank;
     html+= "</h3></div><div class='col-11'><p class='prompt-title'>";
     html+= value.title;
@@ -152,7 +158,11 @@ function buildContent(source) {
     html+= value.upvotes;
     html+= " Upvotes</p><p class='prompt-hours'>";
     html+= value.time;
-    html+= "</p><p class='prompt-comments'>";
+    if (value.comments <= GOOD_COMMENT_CUTOFF) {
+      html+= "</p><p class='prompt-comments' style='color: red'>";
+    } else {
+      html+= "</p><p class='prompt-comments'>";
+    }
     html+= value.comments;
     html+= " Comments</p></div></div></div>";
     });
@@ -172,22 +182,10 @@ window.onload = function() {
   updatePopup();
 }
 
-/* ON LOAD */
-// chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
-//   if (tab.url == ("https://www.reddit.com/r/WritingPrompts/" || "https://www.reddit.com/r/WritingPrompts/rising/")
-//         && changeInfo.status == "complete") {
-//     console.log("update popup 2");
-//     chrome.storage.local.get(['info'], function(request) {
-//       console.log(request.info);
-//     });
-//     updatePopup();
-//   }
-// });
-
 function updatePopup(info) {
   console.log("updating popup");
   chrome.storage.local.get(['time'], function(result) {
-      if(timeDiff(grabTime(false)[0], result.time) > REFRESH_TIME) {
+      if(timeDiff(grabTime(false)[0], result.time) > POPUP_TIME) {
         console.log("1st");
         runScript();
       } else {

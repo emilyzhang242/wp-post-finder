@@ -28,20 +28,21 @@ function getWPcode() {
   }
 
   for (var i=start; i < (NUM_POSTS+start); i++) {
-    var post = divPosts.find(".thing").get(i);
-    var numVotes = getNumVotes(post);
+    var post = divPosts.find(".thing").get(i-1);
+    var url = getPostHTML(post);
+    var numVotes = getNumVotes(post, url);
     var numHours = getNumHours(post);
     var ratio = numVotes/numHours;
 
     //if the conditions aren't met, then don't need to check comments
     if (ratio >= NUM_VOTES_PER_HOUR && numHours <= HOUR_CUTOFF) {
-      var url = getPostHTML(post);
       var timestamp = $(post).find(".entry").find(".live-timestamp").html();
       var title = getTitle(post);
       var comments = getComments(url);
 
       if (comments <= COMMENT_CUTOFF) {
-        possiblePostURLs[url] = {"rank": i-1, "time": timestamp, "upvotes": numVotes, "title": title, "comments": comments};
+        possiblePostURLs[url] = {"rank": i-2, "time": timestamp, "upvotes": numVotes, 
+                                  "title": title, "comments": comments, "ratio": ratio};
       }
     }
   }	
@@ -69,25 +70,21 @@ function getComments(url) {
 
 /* returns the number of comments on the individual page, -1 is for the bot comment */
 function getNumComments(html_string) {
-    var htmlObject = document.createElement('div');
-    $(htmlObject).attr("id", "dominfo")
-    $(htmlObject).html(html_string);
-
     var parser = new DOMParser();
     var doc = parser.parseFromString(html_string, "text/html");
     var children = $(doc).find(".commentarea").find(".nestedlisting").children(".thing");
     return children.length-1;
-
 }
 
-function getNumVotes(post) {
+function getNumVotes(post, url) {
   var votes = $(post).find(".midcol").find(".unvoted").html();
-
+  votes.replace(",", "");
   if ($.isNumeric(votes)) {
     return parseInt(votes);
   } else {
-    votes = getVotesFromPage(post);
+    votes = getVotesFromPage(url);
   }
+  return votes;
 }
 
 /* edge cases: could say 1 day ago or minutes ago. Must take that into account. */
@@ -106,10 +103,30 @@ function getNumHours(post) {
   return parseInt(number);
 }
 
-/* FINISH THIS STUPID */
-function getVotesFromPage(post) {
-  var url = $(post).data("url");
-  console.log(url);
+function getVotesFromPage(url) {
+  var votes = -1;
+
+  $.ajax({
+    url: url,
+    type: "GET",
+    async: false,
+    success: function(response) {
+      votes = getNumVotesFromPage(response);
+    },
+    error: function(response) {
+          console.log("error: "+response);
+    }
+  });
+
+  return votes;
+}
+
+function getNumVotesFromPage(html_string) {
+    var parser = new DOMParser();
+    var doc = parser.parseFromString(html_string, "text/html");
+    var num = $(doc).find(".side").find(".score").find(".number").html();
+    num.replace(",", "");
+    return parseInt(num);
 }
 
 function getPostHTML(post) {

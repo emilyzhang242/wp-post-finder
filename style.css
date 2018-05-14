@@ -28,6 +28,10 @@ p {
 	margin-top: 5px;
 }
 
+.post.post-special {
+	border: 1px solid red;
+}
+
 .stats p {
 	display: inline-block;
 	margin-right: 15px;

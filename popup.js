@@ -3,7 +3,7 @@ let posts = document.querySelector('#posts');
 let numGoodPosts = document.querySelector('#numGoodPosts');
 let wpSite = "https://www.reddit.com/r/WritingPrompts/";
 let alarmName = "alarm";
-let REFRESH_TIME = 30;
+let REFRESH_TIME = 10;
 let myAudio = new Audio();        // create the audio object
 myAudio.src = "light.mp3";
 
@@ -11,19 +11,31 @@ myAudio.src = "light.mp3";
 runScriptButton.onclick = function(element) {
 	// if is running is true, and we press the button, we want it to stop running, while replacing with a run button
   if ($(this).data("run") == "true") {
-    $(this).html("Run Script");
-    $(this).removeClass("btn-danger");
-    $(this).addClass("btn-success");
-    $(this).data("run", "false");
+    stopRunButton();
     stopScript();
+    chrome.storage.sync.set({"running": "false"}, function() {});
     // start the script, but replace it with a stop running button
   } else {
-    $(this).html("Stop Script");
-    $(this).removeClass("btn-success");
-    $(this).addClass("btn-danger");
-    $(this).data("run", "true");
+    runButton();
     runScript();
+    chrome.storage.sync.set({"running": "true"}, function() {});
   }
+}
+
+// script is now running
+function runButton() {
+  $(runScriptButton).html("Stop Script");
+    $(runScriptButton).removeClass("btn-success");
+    $(runScriptButton).addClass("btn-danger");
+    $(runScriptButton).data("run", "true");
+}
+
+// script is now stopping
+function stopRunButton() {
+  $(runScriptButton).html("Run Script");
+    $(runScriptButton).removeClass("btn-danger");
+    $(runScriptButton).addClass("btn-success");
+    $(runScriptButton).data("run", "false");
 }
 
 function runScript() {
@@ -115,8 +127,7 @@ chrome.runtime.onMessage.addListener(function(request, sender) {
 /* END OF LISTENERS */
 
 function buildContent(source) {
-  console.log("build happening now");
-	let html = "No Posts Match";
+	let html = "<h3 class='text-center mt-3'>No Posts</h3>";
 
   if (Object.keys(source).length != 0) {
     html = "";

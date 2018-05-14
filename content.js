@@ -1,6 +1,6 @@
 var NUM_POSTS = 15;
-var HOUR_CUTOFF = 10;
-var NUM_VOTES_PER_HOUR = 25;
+var HOUR_CUTOFF = 12;
+var NUM_VOTES_PER_HOUR = 15;
 var NUM_VOTES_PER_RISING = 10;
 var COMMENT_CUTOFF = 3;
 var postDic = {};
@@ -8,6 +8,8 @@ var redditURL = "https://www.reddit.com";
 var username = "alannawu";
 
 function getWPcode() {
+
+  console.log("get WP code");
 
   var possiblePostURLs = {};
   var start = 0;
@@ -121,6 +123,6 @@ function getTitle(post) {
 }
 
 chrome.runtime.sendMessage({
-    action: "getPrelimPossibilities",
+    action: "callContent",
     source: getWPcode()
 });

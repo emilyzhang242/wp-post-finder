@@ -3,7 +3,7 @@ let posts = document.querySelector('#posts');
 let numGoodPosts = document.querySelector('#numGoodPosts');
 let wpSite = "https://www.reddit.com/r/WritingPrompts/";
 let alarmName = "alarm";
-let REFRESH_TIME = 10;
+let REFRESH_TIME = 20;
 let myAudio = new Audio();        // create the audio object
 myAudio.src = "light.mp3";
 
@@ -11,14 +11,16 @@ myAudio.src = "light.mp3";
 runScriptButton.onclick = function(element) {
 	// if is running is true, and we press the button, we want it to stop running, while replacing with a run button
   if ($(this).data("run") == "true") {
+    console.log("stop running");
     stopRunButton();
     stopScript();
-    chrome.storage.sync.set({"running": "false"}, function() {});
+    chrome.storage.local.set({"running": "false"}, function() {});
     // start the script, but replace it with a stop running button
   } else {
+    console.log("start running");
     runButton();
     runScript();
-    chrome.storage.sync.set({"running": "true"}, function() {});
+    chrome.storage.local.set({"running": "true"}, function() {});
   }
 }
 
@@ -40,6 +42,7 @@ function stopRunButton() {
 
 function runScript() {
   //update URL to main page in order to run script
+  console.log("running the script now");
   chrome.tabs.getSelected(null, function (tab) {
 
     chrome.tabs.update(tab.id, {url: wpSite});
@@ -58,10 +61,10 @@ function runScript() {
     createAlarm();
     var time = grabTime(true);
     //set new storage time
-    chrome.storage.sync.set({"time": time[0]}, function() {
+    chrome.storage.local.set({"time": time[0]}, function() {
       //
     });
-    chrome.storage.sync.set({"writtenTime": time[1]}, function() {
+    chrome.storage.local.set({"writtenTime": time[1]}, function() {
       //
     });
   });
@@ -100,6 +103,8 @@ function grabTime(refresh) {
 
 function stopScript() {
   clearAlarm();
+  $("#lastRefresh").removeClass("btn-outline-success");
+  $("#lastRefresh").addClass("btn-outline")
 }
 
 /* LISTENERS */
@@ -111,7 +116,8 @@ chrome.runtime.onMessage.addListener(function(request, sender) {
   var tabs = {};
   var newInfo = request.source;
 
-  if (request.action == "getPrelimPossibilities") {
+  if (request.action == "callContent") {
+    console.log("listener called for content.js");
     //update badges + audio
     chrome.browserAction.setBadgeBackgroundColor({ color: [255, 0, 0, 255] });
     var numOfPosts = Object.keys(request.source).length.toString();
@@ -120,7 +126,9 @@ chrome.runtime.onMessage.addListener(function(request, sender) {
       myAudio.play();  
     }
 
-    chrome.storage.sync.set({"info": newInfo}, function() {});
+    chrome.storage.local.set({"info": newInfo}, function() {
+      updatePopup(newInfo);
+    });
   }
 });
 
@@ -153,27 +161,39 @@ function buildContent(source) {
 
 // when the popup loads, we want to update it with the storage information
 window.onload = function() {
+  console.log("update popup 1");
+  chrome.storage.local.get(['info'], function(request) {
+    console.log(request.info);
+  });
   updatePopup();
 }
 
 /* ON LOAD */
-chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
-  if (tab.url == ("https://www.reddit.com/r/WritingPrompts/" || "https://www.reddit.com/r/WritingPrompts/rising/")) {
-    updatePopup();
-  }
-});
+// chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
+//   if (tab.url == ("https://www.reddit.com/r/WritingPrompts/" || "https://www.reddit.com/r/WritingPrompts/rising/")
+//         && changeInfo.status == "complete") {
+//     console.log("update popup 2");
+//     chrome.storage.local.get(['info'], function(request) {
+//       console.log(request.info);
+//     });
+//     updatePopup();
+//   }
+// });
 
-function updatePopup() {
-  chrome.storage.sync.get(['time'], function(result) {
-    console.log(timeDiff(grabTime(false)[0], result.time));
+function updatePopup(info) {
+  console.log("updating popup");
+  chrome.storage.local.get(['time'], function(result) {
       if(timeDiff(grabTime(false)[0], result.time) > REFRESH_TIME) {
+        console.log("1st");
         runScript();
       } else {
-        chrome.storage.sync.get(['info'], function(inforesult) {
+        console.log("other");
+        chrome.storage.local.get(['info'], function(inforesult) {
+          console.log(inforesult.info);
           buildContent(inforesult.info);
         });
 
-        chrome.storage.sync.get(['writtenTime'], function(result2) {
+        chrome.storage.local.get(['writtenTime'], function(result2) {
           $("#lastRefresh").html(result2.writtenTime);
         });
       }
@@ -208,3 +228,15 @@ function clearAlarm() {
 chrome.alarms.onAlarm.addListener(function() {
   runScript();
 });
+
+chrome.storage.onChanged.addListener(function(changes, namespace) {
+        for (key in changes) {
+          var storageChange = changes[key];
+          console.log('Storage key "%s" in namespace "%s" changed. ' +
+                      'Old value was "%s", new value is "%s".',
+                      key,
+                      namespace,
+                      storageChange.oldValue,
+                      storageChange.newValue);
+        }
+      });

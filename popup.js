@@ -3,12 +3,22 @@ let posts = document.querySelector('#posts');
 let numGoodPosts = document.querySelector('#numGoodPosts');
 let wpSite = "https://www.reddit.com/r/WritingPrompts/";
 let alarmName = "alarm";
-let REFRESH_TIME = 30;
+let REFRESH_TIME = 20;
 let myAudio = new Audio();        // create the audio object
 myAudio.src = "light.mp3";
 
 let GOOD_COMMENT_CUTOFF = 1; 
 let GOOD_RATIO_CUTOFF = 40;
+
+function runScript() {
+  // button 
+  $("#lastRefresh").removeClass("btn-outline-success");
+  $("#lastRefresh").addClass("btn-outline-danger");
+  
+  chrome.runtime.sendMessage({
+    action: "runScript"
+  });
+}
 
 //want to run the script 
 runScriptButton.onclick = function(element) {
@@ -51,40 +61,6 @@ function stopRunButton() {
     $(runScriptButton).data("run", "false");
 }
 
-function runScript() {
-  //update URL to main page in order to run script
-  console.log("running the script now");
-  chrome.tabs.getSelected(null, function (tab) {
-
-    chrome.tabs.update(tab.id, {url: wpSite});
-
-      //send message to run script
-    chrome.tabs.executeScript(null, {
-        file: "content.js"
-    }, function() {
-      if (chrome.runtime.lastError) {
-        console.log('There was an error getting the content.js : \n' + chrome.runtime.lastError.message);
-      }
-    });
-  });
-  //clear all alarms before creating a new one
-  chrome.alarms.clearAll(function() {
-    createAlarm();
-    //button 
-    $("#lastRefresh").addClass("btn-outline-success");
-    $("#lastRefresh").removeClass("btn-outline-danger");
-
-    var time = grabTime(true);
-    //set new storage time
-    chrome.storage.local.set({"time": time[0]}, function() {
-      //
-    });
-    chrome.storage.local.set({"writtenTime": time[1]}, function() {
-      //
-    });
-  });
-}
-
 // returns an array with the [date object, written object]
 function grabTime(refresh) {
 
@@ -119,37 +95,12 @@ function grabTime(refresh) {
 }
 
 function stopScript() {
-  clearAlarm();
+  chrome.runtime.sendMessage({
+    action: "clearAlarm"
+  });
   $("#lastRefresh").removeClass("btn-outline-success");
   $("#lastRefresh").addClass("btn-outline-danger");
 }
-
-/* LISTENERS */
-
-// receives messages from content.js
-chrome.runtime.onMessage.addListener(function(request, sender) {
-  console.log("received message");
-  //key = tab id, value = url
-  var tabs = {};
-  var newInfo = request.source;
-
-  if (request.action == "callContent") {
-    console.log("listener called for content.js");
-    //update badges + audio
-    chrome.browserAction.setBadgeBackgroundColor({ color: [255, 0, 0, 255] });
-    var numOfPosts = Object.keys(request.source).length.toString();
-    chrome.browserAction.setBadgeText({text: numOfPosts});
-    if (numOfPosts > 0) {
-      myAudio.play();  
-    }
-    console.log(newInfo);
-    chrome.storage.local.set({"info": newInfo}, function() {
-      updatePopup(newInfo);
-    });
-  }
-});
-
-/* END OF LISTENERS */
 
 function buildContent(source) {
 
@@ -256,21 +207,6 @@ function timeDiff(dt1, dt2) {
   }
   return Math.abs(Math.round(diff));
 }
-
-/* alarm functionality */
-function createAlarm() {
-  chrome.alarms.create(alarmName, {periodInMinutes: REFRESH_TIME});
-}
-
-function clearAlarm() {
-  chrome.alarms.clear(alarmName, function() {
-    //
-  });
-}
-
-chrome.alarms.onAlarm.addListener(function() {
-  runScript();
-});
 
 chrome.storage.onChanged.addListener(function(changes, namespace) {
         for (key in changes) {

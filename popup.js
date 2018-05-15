@@ -9,11 +9,12 @@ myAudio.src = "light.mp3";
 
 let GOOD_COMMENT_CUTOFF = 1; 
 let GOOD_RATIO_CUTOFF = 40;
+let GOOD_HOUR_CUTOFF = 5;
 
 function runScript() {
   // button 
-  $("#lastRefresh").removeClass("btn-outline-success");
-  $("#lastRefresh").addClass("btn-outline-danger");
+  $("#lastRefresh").addClass("btn-outline-success");
+  $("#lastRefresh").removeClass("btn-outline-danger");
   
   chrome.runtime.sendMessage({
     action: "runScript"
@@ -112,7 +113,7 @@ function buildContent(source) {
     htmlhot = "";
     htmlrising = "";
     $.each(sorted_array, function(key, value) {
-    if (value.ratio > GOOD_RATIO_CUTOFF) {
+    if (value.ratio >= GOOD_RATIO_CUTOFF && value.numHours <= GOOD_HOUR_CUTOFF) {
       window["html"+value.type]+= "<div class='row post post-special "+value.type+"'><div class='col-1'><h3 class='prompt-rank'>";
     } else {
       window["html"+value.type]+= "<div class='row post "+value.type+"'><div class='col-1'><h3 class='prompt-rank'>";

@@ -56,7 +56,7 @@ function getWPcode(divPosts, type) {
 
   // code for hot posts 
   for (var i=start; i < numPosts; i++) {
-    var post = divPosts.find(".thing").get(i-1);
+    var post = divPosts.find(".thing").get(i);
     var url = getPostHTML(post);
     var numVotes = getNumVotes(post, url);
     var numHours = getNumHours(post);
@@ -65,13 +65,16 @@ function getWPcode(divPosts, type) {
     //if the conditions aren't met, then don't need to check comments
     if (ratio >= NUM_VOTES_PER_HOUR && numHours <= HOUR_CUTOFF) {
       var timestamp = $(post).find(".entry").find(".live-timestamp").html();
+      console.log(url);
+      console.log(timestamp);
       var title = getTitle(post);
       var comments = getComments(url);
+      var rank = $(post).find(".rank").html();
 
       if (comments <= COMMENT_CUTOFF) {
-        possiblePostURLs[url] = {"rank": i-start, "time": timestamp, "upvotes": numVotes, 
+        possiblePostURLs[url] = {"rank": parseInt(rank), "time": timestamp, "upvotes": numVotes, 
                                   "title": title, "comments": comments, "ratio": ratio, "type": type,
-                                  "url": url};
+                                  "url": url, "numHours": numHours};
       }
     }
   }	
@@ -125,6 +128,8 @@ function getNumHours(post) {
     return parseInt(number/60.0);
   } else if (timestamp.includes("day")) {
     return 24;
+  } else if (timestamp.includes("an hour")) {
+    return 1;
   }
   return parseInt(number);
 }

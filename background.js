@@ -1,8 +1,11 @@
 let alarmName = "alarm";
 let REFRESH_TIME = 20;
-let myAudio = new Audio();
 let wpSite = "https://www.reddit.com/r/WritingPrompts/";
-myAudio.src = "light.mp3";
+let myAudio = new Audio();        // create the audio object
+let goodAudio = new Audio();
+myAudio.src = "sounds/light.mp3";
+goodAudio.src = "sounds/serious-strike.mp3";
+let runGoodAudio = false;
 
 chrome.runtime.onInstalled.addListener(function() {
     chrome.declarativeContent.onPageChanged.removeRules(undefined, function() {
@@ -18,6 +21,10 @@ chrome.runtime.onInstalled.addListener(function() {
 
 console.log("background is running");
 createAlarm();
+runScript();
+chrome.storage.local.set({"isRunning": true}, function() {
+      //
+    });
 
 /* alarm functionality */
 function createAlarm() {
@@ -38,6 +45,7 @@ chrome.alarms.onAlarm.addListener(function() {
 });
 
 function runScript() {
+  console.log("background running the script");
   chrome.tabs.query({url: wpSite}, function (tab) {
     console.log(tab);
 
@@ -115,9 +123,12 @@ chrome.runtime.onMessage.addListener(function(request, sender) {
     //update badges + audio
     chrome.browserAction.setBadgeBackgroundColor({ color: [255, 0, 0, 255] });
     var numOfPosts = Object.keys(request.source).length.toString();
+    console.log("num of posts: "+numOfPosts);
     chrome.browserAction.setBadgeText({text: numOfPosts});
-    if (numOfPosts > 0) {
-      myAudio.play();  
+    if (numOfPosts > 0 && request.haveGoodPosts == true) {
+      goodAudio.play();
+    } else if (numOfPosts > 0) {
+      myAudio.play(); 
     }
     chrome.storage.local.set({"info": request.source}, function() {
     });

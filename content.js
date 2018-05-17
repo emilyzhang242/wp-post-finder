@@ -6,6 +6,7 @@ var COMMENT_CUTOFF = 3;
 var postDic = {};
 var redditURL = "https://www.reddit.com";
 var username = "alannawu";
+var haveZeroComments = false;
 
 function createWPDictionary() {
   var hotDict = getWPcode($("html").find("#siteTable"), "hot");
@@ -30,6 +31,7 @@ function createWPDictionary() {
 }
 
 function getWPcode(divPosts, type) {
+  console.log("running WP");
 
   var possiblePostURLs = {};
   var start = 0;
@@ -63,15 +65,20 @@ function getWPcode(divPosts, type) {
     var ratio = numVotes/numHours;
 
     //if the conditions aren't met, then don't need to check comments
-    if (ratio >= NUM_VOTES_PER_HOUR && numHours <= HOUR_CUTOFF) {
+    if ((ratio >= NUM_VOTES_PER_HOUR && numHours <= HOUR_CUTOFF && type=="hot") ||
+        (numVotes > 5 && type=="rising")) {
+      console.log('conditions met');
       var timestamp = $(post).find(".entry").find(".live-timestamp").html();
-      console.log(url);
-      console.log(timestamp);
       var title = getTitle(post);
       var comments = getComments(url);
       var rank = $(post).find(".rank").html();
 
       if (comments <= COMMENT_CUTOFF) {
+
+        if (comments == 0 && type == "hot") {
+          haveZeroComments = true;
+        }
+
         possiblePostURLs[url] = {"rank": parseInt(rank), "time": timestamp, "upvotes": numVotes, 
                                   "title": title, "comments": comments, "ratio": ratio, "type": type,
                                   "url": url, "numHours": numHours};
@@ -172,5 +179,6 @@ function getTitle(post) {
 
 chrome.runtime.sendMessage({
     action: "callContent",
-    source: createWPDictionary()
+    source: createWPDictionary(),
+    haveGoodPosts: haveZeroComments 
 });

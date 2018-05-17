@@ -4,35 +4,82 @@ let numGoodPosts = document.querySelector('#numGoodPosts');
 let wpSite = "https://www.reddit.com/r/WritingPrompts/";
 let alarmName = "alarm";
 let REFRESH_TIME = 20;
-let myAudio = new Audio();        // create the audio object
-myAudio.src = "light.mp3";
 
 let GOOD_COMMENT_CUTOFF = 1; 
 let GOOD_RATIO_CUTOFF = 40;
 let GOOD_HOUR_CUTOFF = 5;
 
+/* WHEN THE POPUP LOADS */
+
+// when the popup loads, we want to update it with the storage information
+window.onload = function() {
+  console.log("update popup 1");
+  chrome.storage.local.get(['info'], function(request) {
+  });
+  updateRunScriptButton();
+  updatePopup();
+}
+
+/* This function updates the UI for the button and the outline for the time */
+function updateRunScriptButton() {
+  //update the runscript button 
+  chrome.storage.local.get(['isRunning'], function(request) {
+    console.log("is it running? "+request.isRunning);
+    // if currently running, we want the button to show "stop running"
+    if (request.isRunning) {
+      //update outline
+      $("#lastRefresh").addClass("btn-outline-success");
+      $("#lastRefresh").removeClass("btn-outline-danger");
+      //update button contents
+      buttonSaysStop();
+    } else {
+      $("#lastRefresh").removeClass("btn-outline-success");
+      $("#lastRefresh").addClass("btn-outline-danger");
+      buttonSaysRun();
+    }
+  });
+}
+
+/* END WHEN THE POPUP LOADS */
+
+/* RUN SCRIPT FUNCTIONALITY */
+
 function runScript() {
-  // button 
-  $("#lastRefresh").addClass("btn-outline-success");
-  $("#lastRefresh").removeClass("btn-outline-danger");
-  
+  chrome.storage.local.set({"isRunning": true}, function() {
+      //
+  });
+
   chrome.runtime.sendMessage({
     action: "runScript"
+  });
+}
+
+function stopScript() {
+  chrome.runtime.sendMessage({
+    action: "clearAlarm"
+  });
+
+  chrome.storage.local.set({"isRunning": false}, function() {
+      //
   });
 }
 
 //want to run the script 
 runScriptButton.onclick = function(element) {
 	// if is running is true, and we press the button, we want it to stop running, while replacing with a run button
-  if ($(this).data("run") == "true") {
-    stopRunButton();
-    stopScript();
-    // start the script, but replace it with a stop running button
-  } else {
-    runButton();
-    runScript();
-  }
+  chrome.storage.local.get(['isRunning'], function(request) {
+    console.log(request.isRunning);
+    if (request.isRunning) {
+      stopScript();
+    } else {
+      runScript();
+    }
+    updateRunScriptButton();
+    updatePopup();
+  });
 }
+
+/* END RUN SCRIPT FUNCTIONALITY */
 
 $("input[name=post]").on("change", function() {
   //hide the correct one 
@@ -46,20 +93,20 @@ $("input[name=post]").on("change", function() {
   }
 });
 
-// script is now running
-function runButton() {
+// script is now running, so replace it with the top button
+function buttonSaysStop() {
   $(runScriptButton).html("Stop Script");
-    $(runScriptButton).removeClass("btn-success");
-    $(runScriptButton).addClass("btn-danger");
-    $(runScriptButton).data("run", "true");
+  $(runScriptButton).removeClass("btn-success");
+  $(runScriptButton).addClass("btn-danger");
+  $(runScriptButton).data("run", "true");
 }
 
-// script is now stopping
-function stopRunButton() {
+// script is now stopping, so replace it with the run button
+function buttonSaysRun() {
   $(runScriptButton).html("Run Script");
-    $(runScriptButton).removeClass("btn-danger");
-    $(runScriptButton).addClass("btn-success");
-    $(runScriptButton).data("run", "false");
+  $(runScriptButton).removeClass("btn-danger");
+  $(runScriptButton).addClass("btn-success");
+  $(runScriptButton).data("run", "false");
 }
 
 // returns an array with the [date object, written object]
@@ -95,14 +142,6 @@ function grabTime(refresh) {
     return [newDate.toString(), time];
 }
 
-function stopScript() {
-  chrome.runtime.sendMessage({
-    action: "clearAlarm"
-  });
-  $("#lastRefresh").removeClass("btn-outline-success");
-  $("#lastRefresh").addClass("btn-outline-danger");
-}
-
 function buildContent(source) {
 
   var sorted_array = sortDictionary(source);
@@ -113,7 +152,7 @@ function buildContent(source) {
     htmlhot = "";
     htmlrising = "";
     $.each(sorted_array, function(key, value) {
-    if (value.ratio >= GOOD_RATIO_CUTOFF && value.numHours <= GOOD_HOUR_CUTOFF) {
+    if (value.ratio >= GOOD_RATIO_CUTOFF) {
       window["html"+value.type]+= "<div class='row post post-special "+value.type+"'><div class='col-1'><h3 class='prompt-rank'>";
     } else {
       window["html"+value.type]+= "<div class='row post "+value.type+"'><div class='col-1'><h3 class='prompt-rank'>";
@@ -166,16 +205,7 @@ function sortDictionary(dic) {
   return array;
 }
 
-// when the popup loads, we want to update it with the storage information
-window.onload = function() {
-  console.log("update popup 1");
-  chrome.storage.local.get(['info'], function(request) {
-    console.log(request.info);
-  });
-  updatePopup();
-}
-
-function updatePopup(info) {
+function updatePopup() {
   console.log("updating popup");
   chrome.storage.local.get(['time'], function(result) {
       if(timeDiff(grabTime(false)[0], result.time) > REFRESH_TIME) {
@@ -184,7 +214,6 @@ function updatePopup(info) {
       } else {
         console.log("other");
         chrome.storage.local.get(['info'], function(inforesult) {
-          console.log(inforesult.info);
           buildContent(inforesult.info);
         });
 

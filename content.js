@@ -26,6 +26,7 @@ function createWPDictionary() {
   });
   $.extend(hotDict, risingDict);
   console.log(JSON.stringify(hotDict));
+  console.log(hotDict);
   return hotDict;
 
 }

@@ -13,12 +13,18 @@ let GOOD_HOUR_CUTOFF = 5;
 
 // when the popup loads, we want to update it with the storage information
 window.onload = function() {
-  console.log("update popup 1");
   chrome.storage.local.get(['info'], function(request) {
   });
   updateRunScriptButton();
   updatePopup();
 }
+
+chrome.runtime.onMessage.addListener(function(request, sender) {
+  if (request.action == "updatePopup") {
+    console.log("updatepopup requested");
+    updatePopup();
+  }
+});
 
 /* This function updates the UI for the button and the outline for the time */
 function updateRunScriptButton() {
@@ -68,10 +74,10 @@ function stopScript() {
 runScriptButton.onclick = function(element) {
 	// if is running is true, and we press the button, we want it to stop running, while replacing with a run button
   chrome.storage.local.get(['isRunning'], function(request) {
-    console.log(request.isRunning);
     if (request.isRunning) {
       stopScript();
     } else {
+      console.log("running script from button click");
       runScript();
     }
     updateRunScriptButton();
@@ -190,8 +196,6 @@ function buildContent(source) {
 }
 
 function sortDictionary(dic) {
-  console.log("sorting dictionary");
-  console.log(dic);
   var array = [];
 
   $.each(dic, function(key, value) {
@@ -209,10 +213,10 @@ function updatePopup() {
   console.log("updating popup");
   chrome.storage.local.get(['time'], function(result) {
       if(timeDiff(grabTime(false)[0], result.time) > REFRESH_TIME) {
-        console.log("1st");
+        console.log("refreshing");
         runScript();
       } else {
-        console.log("other");
+        console.log("not refreshing");
         chrome.storage.local.get(['info'], function(inforesult) {
           buildContent(inforesult.info);
         });

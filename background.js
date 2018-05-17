@@ -7,47 +7,42 @@ myAudio.src = "sounds/light.mp3";
 goodAudio.src = "sounds/serious-strike.mp3";
 let runGoodAudio = false;
 
-chrome.runtime.onInstalled.addListener(function() {
-    chrome.declarativeContent.onPageChanged.removeRules(undefined, function() {
-      chrome.declarativeContent.onPageChanged.addRules([{
-        conditions: [new chrome.declarativeContent.PageStateMatcher({
-          pageUrl: {urlMatches: 'reddit.com/r/WritingPrompts/$'},
-        })
-        ],
-            actions: [new chrome.declarativeContent.ShowPageAction()]
-      }]);
-    });
-});
+// chrome.runtime.onInstalled.addListener(function() {
+//     chrome.declarativeContent.onPageChanged.removeRules(undefined, function() {
+//       chrome.declarativeContent.onPageChanged.addRules([{
+//         conditions: [new chrome.declarativeContent.PageStateMatcher({
+//           pageUrl: {urlMatches: 'reddit.com/r/WritingPrompts/$'},
+//         })
+//         ],
+//             actions: [new chrome.declarativeContent.ShowPageAction()]
+//       }]);
+//     });
+// });
 
 console.log("background is running");
-createAlarm();
 runScript();
 chrome.storage.local.set({"isRunning": true}, function() {
       //
-    });
+});
 
 /* alarm functionality */
 function createAlarm() {
-  console.log("alarm created");
   chrome.alarms.create(alarmName, {periodInMinutes: REFRESH_TIME});
 }
 
 function clearAlarm() {
-  console.log("alarm deleted");
   chrome.alarms.clear(alarmName, function() {
     //
   });
 }
 
 chrome.alarms.onAlarm.addListener(function() {
-  console.log("script fired");
   runScript();
 });
 
 function runScript() {
   console.log("background running the script");
   chrome.tabs.query({url: wpSite}, function (tab) {
-    console.log(tab);
 
     if (tab.length == 0) {
       chrome.tabs.create({url: wpSite}, function() {});
@@ -116,14 +111,13 @@ function grabTime(refresh) {
 
 // receives messages from content.js
 chrome.runtime.onMessage.addListener(function(request, sender) {
-  console.log("received message");
+  console.log("received message called "+request.action);
 
   if (request.action == "callContent") {
     console.log("listener called for content.js");
     //update badges + audio
     chrome.browserAction.setBadgeBackgroundColor({ color: [255, 0, 0, 255] });
     var numOfPosts = Object.keys(request.source).length.toString();
-    console.log("num of posts: "+numOfPosts);
     chrome.browserAction.setBadgeText({text: numOfPosts});
     if (numOfPosts > 0 && request.haveGoodPosts == true) {
       goodAudio.play();
@@ -132,6 +126,12 @@ chrome.runtime.onMessage.addListener(function(request, sender) {
     }
     chrome.storage.local.set({"info": request.source}, function() {
     });
+    //send message to change the popup to update
+    console.log("sending updatepopup message");
+    chrome.runtime.sendMessage({
+      action: "updatePopup"
+    });
+
   } else if (request.action == "runScript") {
     runScript();
   } else if (request.action == "createAlarm") {
